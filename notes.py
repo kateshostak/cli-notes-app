@@ -1,6 +1,7 @@
 import argparse
 import os.path
 import time
+import sys
 
 
 class Note(object):
@@ -20,9 +21,10 @@ class Note_saver(object):
     """docstring for Notes"""
     def __init__(self, note, path_to_file):
         try:
-            isinstance(note, Note)
+            if not isinstance(note, Note):
+                raise TypeError("The given object is not the 'Note' type.")
         except TypeError:
-            print("The given object is not the 'Note' type.")
+            sys.exit()
         self.note = note
         self.path_to_file = path_to_file
 
