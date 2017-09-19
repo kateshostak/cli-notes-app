@@ -1,11 +1,9 @@
 import argparse
 import os.path
 import time
-import sys
 
 
 class Note(object):
-    """docstring for Note"""
     def __init__(self, note_text):
         self.text = note_text
         self.date_created = self.get_date_time_created()
@@ -17,26 +15,25 @@ class Note(object):
         return self.text, self.date_created
 
 
-class Note_saver(object):
-    """docstring for Notes"""
-    def __init__(self, note, path_to_file):
-        try:
-            if not isinstance(note, Note):
-                raise TypeError("The given object is not the 'Note' type.")
-        except TypeError:
-            sys.exit()
-        self.note = note
+class NoteSaver(object):
+    def __init__(self, path_to_file):
         self.path_to_file = path_to_file
 
-    def save_note(self):
-        if self.path_to_file:
-            self.write_to_file(path_to_file)
-        else:
-            self.write_to_file()
+    def check_note_is_valid_type(self, note):
+        if isinstance(note, Note):
+            return True
 
-    def write_to_file(self, path_to_file='notes'):
-        with open(path_to_file, 'w') as f:
-            f.write(str(self.note.get_text_and_date()))
+    def check_path_to_file_exists(self):
+        return os.path.exists(os.path.dirname(os.path.abspath(self.path_to_file)))
+
+    def save(self, note):
+        if self.check_note_is_valid_type(note):
+            self.write_to_file(note)
+
+    def write_to_file(self, note):
+        if self.check_path_to_file_exists():
+            with open(self.path_to_file, 'w') as f:
+                f.write(str(note.get_text_and_date()))
 
 
 def parse_arguments():
@@ -52,7 +49,7 @@ def parse_arguments():
 
     parser.add_argument(
         "--path",
-        default=""
+        default="notes.txt"
     )
 
     return parser.parse_args()
@@ -63,8 +60,8 @@ def main():
     note_to_add = args.add
     file_path = args.path
     note = Note(note_to_add)
-    note_saver = Note_saver(note, file_path)
-    note_saver.save_note()
+    note_saver = Note_saver(file_path)
+    note_saver.save(note)
 
 
 if __name__ == "__main__":
