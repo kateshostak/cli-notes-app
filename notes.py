@@ -11,7 +11,7 @@ class Note(object):
         self.date_created = self._get_date_time_created()
 
     def _get_date_time_created(self):
-        return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
 
     def _get_text_and_date(self):
         return self.text, self.date_created
