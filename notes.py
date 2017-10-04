@@ -1,5 +1,4 @@
 import argparse
-import os.path
 import time
 import sys
 import traceback
@@ -12,13 +11,13 @@ from abstract_extractor import AbstractExtractor
 class Note(object):
     def __init__(self, note_text):
         self.text = note_text
-        self.timestamp = self._get_timestamp()
+        self.timestamp = time.time()
 
-    def _get_timestamp(self):
-        return time.time()
-
-    def _get_text(self):
+    def get_text(self):
         return self.text
+
+    def get_timestamp(self):
+        return self.timestamp
 
 
 class NoteSaverTxt(AbstractSaver):
@@ -28,40 +27,48 @@ class NoteSaverTxt(AbstractSaver):
     def save(self, note):
         try:
             with open(self.path_to_save_destination, 'a') as f:
-                dateformat, note_text = self._format_note_representation(note)
-                print(f"{dateformat} : {note_text}", file=f)
+                note_timestamp = note.get_timestamp()
+                note_text = note.get_text()
+                print(f"{note_timestamp} : {note_text}", file=f)
         except Exception as e:
             print("Unable to save the note.")
             logging.error(traceback.format_exc())
-
-    def _format_note_representation(self, note):
-        note_text = note._get_text()
-        note_date = time.localtime(note._get_timestamp())
-        dateformat = (
-            "{day}.{month}.{year} {hour}:{min}".
-            format(
-                day=note_date.tm_mday,
-                month=note_date.tm_mon,
-                year=note_date.tm_year,
-                hour=note_date.tm_hour,
-                min=note_date.tm_min
-            )
-        )
-        return dateformat, note_text
 
 
 class NoteExtractor(AbstractExtractor):
     def __init__(self, path_to_notes):
         super(NoteExtractor, self).__init__(path_to_notes)
 
-    def show_all_notes(self):
+    def show_all_notes(self, word, date=None):
         try:
             with open(self.path_to_notes) as f:
-                for line in f:
-                    print(line)
+                notes = self._parse_note(f)
+                if date:
+                    self._print_notes(self._search_by_date(notes, date))
+                elif word:
+                    self._print_notes(self._search_by_word(notes, word))
+                else:
+                    self._print_notes(notes)
         except Exception as e:
             print("Unable to open notes.")
             logging.error(traceback.format_exc())
+
+    def _parse_note(self, notes):
+        return [note.split(":") for note in notes]
+
+    def _search_by_date(self, notes, date):
+        pass
+
+    def _search_by_word(self, notes, keyword):
+        return [note for note in notes if keyword in note[1]]
+
+    def _print_notes(self, notes):
+        for note in notes:
+            note_date = self._get_time_formated(float(note[0]))
+            print(f"{note_date} : {note[1]}")
+
+    def _get_time_formated(self, timestamp):
+        return time.strftime("%a, %d %b %Y %H:%M", time.gmtime(timestamp))
 
 
 def parse_arguments():
@@ -80,6 +87,11 @@ def parse_arguments():
         default="notes.txt"
     )
 
+    parser.add_argument(
+        "--keyword",
+        default="Hello"
+    )
+
     return parser.parse_args()
 
 
@@ -87,11 +99,12 @@ def main():
     args = parse_arguments()
     note_to_add = args.add
     file_path = args.path
+    keyword = args.keyword
     note = Note(note_to_add)
     note_saver = NoteSaverTxt(file_path)
     note_saver.save(note)
     note_extractor = NoteExtractor(file_path)
-    note_extractor.show_all_notes()
+    note_extractor.show_all_notes(word=keyword)
 
 
 if __name__ == "__main__":
