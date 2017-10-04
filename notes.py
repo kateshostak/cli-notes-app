@@ -1,8 +1,12 @@
 import argparse
 import os.path
 import time
+import sys
+import traceback
+import logging
 
 from abstract_saver import AbstractSaver
+from abstract_extractor import AbstractExtractor
 
 
 class Note(object):
@@ -18,13 +22,17 @@ class Note(object):
 
 
 class NoteSaverTxt(AbstractSaver):
-    def __init__(self, path_to_file):
-        super(NoteSaverTxt, self).__init__(path_to_file)
+    def __init__(self, path_to_save_destination):
+        super(NoteSaverTxt, self).__init__(path_to_save_destination)
 
     def save(self, note):
-        if self._check_path_to_destination_exists():
-            with open(self.path_to_save_destination, 'w') as f:
-                f.write(str(self._format_note_representation(note)))
+        try:
+            with open(self.path_to_save_destination, 'a') as f:
+                dateformat, note_text = self._format_note_representation(note)
+                print(f"{dateformat} : {note_text}", file=f)
+        except Exception as e:
+            print("Unable to save the note.")
+            logging.error(traceback.format_exc())
 
     def _format_note_representation(self, note):
         note_text = note._get_text()
@@ -41,19 +49,19 @@ class NoteSaverTxt(AbstractSaver):
         )
         return dateformat, note_text
 
-    def _check_path_to_destination_exists(self):
-        return (
-            os.path.
-            exists(
-                os.path.
-                dirname(
-                    os.path.
-                    abspath(
-                        self.path_to_save_destination
-                    )
-                )
-            )
-        )
+
+class NoteExtractor(AbstractExtractor):
+    def __init__(self, path_to_notes):
+        super(NoteExtractor, self).__init__(path_to_notes)
+
+    def show_all_notes(self):
+        try:
+            with open(self.path_to_notes) as f:
+                for line in f:
+                    print(line)
+        except Exception as e:
+            print("Unable to open notes.")
+            logging.error(traceback.format_exc())
 
 
 def parse_arguments():
@@ -82,6 +90,8 @@ def main():
     note = Note(note_to_add)
     note_saver = NoteSaverTxt(file_path)
     note_saver.save(note)
+    note_extractor = NoteExtractor(file_path)
+    note_extractor.show_all_notes()
 
 
 if __name__ == "__main__":

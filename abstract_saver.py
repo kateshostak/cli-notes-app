@@ -4,6 +4,3 @@ class AbstractSaver(object):
 
     def save(self, note):
         raise NotImplementedError
-
-    def _check_path_to_destination_exists(self):
-        raise NotImplementedError
